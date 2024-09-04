@@ -5,30 +5,97 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Redirecting</title>
   <script>
-    window.onload = function() {
-      // Get the prompt from the URL parameters
+    window.onload = async function() {
       const urlParams = new URLSearchParams(window.location.search);
       const prompt = urlParams.get('prompt');
       const urlCustom = urlParams.get('url');
-      
+      const errorMessage = document.getElementById('error-message');
+      const redirectMessage = document.getElementById('redirect-message');
+      const retryButton = document.getElementById('retry-button');
+
       if (prompt) {
-        // Copy the prompt to the clipboard
-        navigator.clipboard.writeText(prompt).then(function() {
-          console.log('Prompt copied to clipboard:', prompt);
-          if (urlCustom) {
+        try {
+          const queryOpts = { name: 'clipboard-read', allowWithoutGesture: false };
+          const permissionStatus = await navigator.permissions.query(queryOpts);
+
+          // Listen for changes to the permission state
+          permissionStatus.onchange = () => {
+            handlePermissionChange(permissionStatus.state, prompt);
+          };
+
+          // Handle initial permission state
+          handlePermissionChange(permissionStatus.state, prompt);
+        } catch (error) {
+          console.error('Error querying clipboard permission:', error);
+          showError();
+        }
+      }
+
+      function handlePermissionChange(state, prompt) {
+        if (state === 'granted') {
+          // Copy the prompt to the clipboard
+          navigator.clipboard.writeText(prompt).then(function() {
+            console.log('Prompt copied to clipboard:', prompt);
+            if (urlCustom) {
               window.location.href = urlCustom;
-          } else {
-              // Redirect to ChatGPT
+            } else {
               window.location.href = "https://chat.openai.com/";
+            }
+          }).catch(function(error) {
+            console.error('Error copying to clipboard:', error);
+            showError();
+          });
+        } else if (state === 'prompt') {
+          // Request clipboard permission
+          navigator.clipboard.writeText(prompt).then(function() {
+            console.log('Prompt copied after permission:', prompt);
+            if (urlCustom) {
+              window.location.href = urlCustom;
+            } else {
+              window.location.href = "https://chat.openai.com/";
+            }
+          }).catch(function(error) {
+            console.error('Clipboard permission denied or error:', error);
+            showError();
+          });
+        } else {
+          showError();
+        }
+      }
+
+      function showError() {
+        errorMessage.style.display = 'block';
+        redirectMessage.style.display = 'none';
+      }
+
+      retryButton.onclick = function() {
+        // Retry clipboard write when button is clicked
+        navigator.clipboard.writeText(prompt).then(function() {
+          console.log('Prompt copied after retry:', prompt);
+          if (urlCustom) {
+            window.location.href = urlCustom;
+          } else {
+            window.location.href = "https://chat.openai.com/";
           }
         }).catch(function(error) {
-          console.error('Error copying to clipboard:', error);
+          console.error('Error copying to clipboard on retry:', error);
+          alert('Clipboard access still denied. Please enable permissions manually.');
         });
-      }
+      };
     };
   </script>
 </head>
 <body style="color: white; background-color:black;">
-  <h1>📋 🤖 💬 Copying prompt to clipboard redirecting to ChatGPT...</h1>
+  <h1 id="redirect-message">📋 🤖 💬 Copying prompt to clipboard and redirecting...</h1>
+  <div id="error-message" style="display: none;">
+    <h1>Ooops, your browser cannot write to your clipboard.</h1>
+    <p>
+      <a href="https://www.howtogeek.com/671244/how-to-enable-copy-and-paste-shortcuts-in-chrome/">Enable clipboard permissions in Chrome</a><br>
+      <a href="https://support.mozilla.org/en-US/kb/permissions-manager-give-allow-deny-access">Enable clipboard permissions in Firefox</a><br>
+      <a href="https://support.apple.com/en-us/guide/safari/sfri40732/mac">Enable clipboard permissions in Safari</a><br>
+    </p>
+    <p>Or try again:</p>
+    <button id="retry-button" style="padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">Retry Clipboard Copy</button>
+  </div>
 </body>
 </html>
