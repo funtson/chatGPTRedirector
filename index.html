@@ -10,6 +10,19 @@
       font-size: 18px;
       text-decoration: underline;
     }
+
+    .preview {
+      width: 70%;
+      max-width: 100%; /* Prevents the image from exceeding its container */
+    }
+
+    /* Mobile view */
+    @media (max-width: 768px) {
+      .preview {
+        width: 100%;
+      }
+    }
+
   </style>
   <script>
     window.onload = async function() {
@@ -98,7 +111,7 @@
     <h1>Ooops, your browser cannot write to your clipboard.  You may want to set permissions to always on this domain.</h1>
     <p>
       <a href="https://support.google.com/chrome/answer/114662?hl=en">Enable clipboard permissions in Chrome (check the top bar for a clipboard icon)</a><br>
-      <img src="sitesettings.gif"/>
+      <img src="sitesettings.gif" alt="Site Settings" class="preview"/>
     </p>
     <p>Or try again:</p>
     <button id="retry-button" style="padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">Retry Clipboard Copy</button>
